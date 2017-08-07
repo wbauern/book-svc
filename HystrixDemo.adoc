@@ -23,11 +23,16 @@ breaker names used in this demos will be the following:
 
 Setup
 ~~~~~
-* Run the discovery server
-* Run the hystrix dashboard
-* Run the book-detail-svc : it runs on port 8090
-* Run the book-svc : it runs on port 8080
+* Run a discovery server
+* Run a hystrix dashboard
+* Run the book-detail-svc
+** Located at https://github.com/wbauern/book-detail-sv
+** Runs on port 8090
+* Run the book-svc :
+** Located at https://github.com/wbauern/book-svc
+** Runs on port 8080
 * Run JMeter
+** JMeter scripts used for demo located in:
 
 Circuit Breaker Demo
 ~~~~~~~~~~~~~~~~~~~~
