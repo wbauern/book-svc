@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: book-svc
+    
+management:
+  security:
+    enabled: false
+    
+feign.hystrix.enabled: true
+
