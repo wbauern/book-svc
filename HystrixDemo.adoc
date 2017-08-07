@@ -1,0 +1,78 @@
+Spring Cloud Hystrix Demo
+------------------------
+
+This demo will show the Hystrix circuit breaker and bulk head patterns in action.
+
+Approximate time: 10-15 minutes
+
+Context
+~~~~~~~
+The book-svc service is calling out to the book-details-svc service to get book data.  The book
+service also has simple in-memory cache of book data that it will use for a fallback if it can't
+successfully retrieve it from the book details service. Separate Hystrix circuit breakers wrap both
+the external call out to the details service and the internal call to the cache.  The two circuit
+breakers are setup to use separate thread pools.
+
+The book-svc is using a Feign client to call out the the book-detail-svc.  It will automatically name
+the circuit breakers it creates and those are the names that will appear in the Dashboard (NOTE: These are not great names for
+demo purposes but I couldn't find a way to rename them.  I will look around some more to see if it is possible). The circuit
+breaker names used in this demos will be the following:
+
+* *BookDetailSvcFeignClient#getBookDetailsByIsbn(String)* - Circuit Breaker for the Primary method (calling the details service)
+* *getBookDetailsByIsbn* - Circuit Breaker for the Fallback method (using the cache data)
+
+Setup
+~~~~~
+* Run the discovery server
+* Run the hystrix dashboard
+* Run the book-detail-svc : it runs on port 8090
+* Run the book-svc : it runs on port 8080
+* Run JMeter
+
+Circuit Breaker Demo
+~~~~~~~~~~~~~~~~~~~~
+
+This part of the demo will use a load test with JMeter to put load on a   The book-details-svc can then be killed and restarted to show via the dashboard how the circuit breaker handles it with no errors.
+
+Demo Steps:
+^^^^^^^^^^^
+
+. Load the book-svc-steady-load.jmx script in JMeter
+. Go to the Hystrix Dashboard: http://localhost:8686/hytrix
+. Enter the URL to the book-svc hystrix stream: http://localhost:8080/hystrix.stream , enter a title of Book Service and then
+click the Monitor Stream button.
+. Explain how you don't see any circuit breakers in the dashboard until they actually start receiving requests.
+. In JMeter click on the Summary Report component for the load test and start the test
+. Point out the Error % column and how it will reflect any responses that a client receives.
+. Show the Hystrix dashboard and click on the Alphabetically link at the top of the screen.  This will keep the circuit breakers
+ordered by name instead of load and prevent them from swapping positions during the demo.
+. Kill the book-detail-svc and talk to what is happening in the dashboard.
+.. Failures start to occur and are routed to the fallback method.
+.. The fallback circuit breaker appears on the Dashboard as it begins to receive requests.
+.. The breaker on the primary opens and all load is being handled by the fallback.
+.. Point out that the primary will still be hit occasionally to see if it is back up (half-open state).
+. Show the Error % in JMeter and point out that no errors were received by the client.
+. Start up the book-detail-svc and show the Dashboard again.
+.. There may be a 30 - 60 second period before the load starts getting handled by the svc again.  Explain why: the service needs to
+register and won't be visible to the book-svc until its service registry information has been refreshed.
+.. Point out on the Dashboard the load shifting back to the primary circuit breaker.
+. Again emphasize that the primary dependency of the book service went down and back up with not a single error returned to the client.
+
+
+Bulkhead Demo
+~~~~~~~~~~~~~
+
+This part of the demo will use a JMeter load test with high concurrent thread count to put heavy load on the book service. The circuit breaker around the external call to the details service has created a bulkhead around it with a limit of 10 concurrent active threads.  When this is exceeded any extra load will be shed to the fallback method so that it doesn't overwhelm the details service.
+
+Demo Steps:
+^^^^^^^^^^^
+
+. Load the book-svc-heavy-load.jmx script in JMeter
+. The Hystrix Dashboard should still be running from the previous demo.
+.. Point out the thread pool sizes of the primary and fallback circuit breakers.  They both have separate thread pools with 10 max threads.
+. In JMeter show in the Load Generator component that it will be using 13 concurrent threads during the test.  Then click on the Summary
+Report component for the load test and start the test.
+. The Dashboard will show the following
+.. Load initially growing on the primary breaker calling out to the details service.
+.. Then when the max number of threads are being consumed some load will be shed to the cache circuit breaker.  The purple
+number (Rejected) reflects the number of request being shed to the fallback.
