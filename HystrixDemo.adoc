@@ -26,7 +26,7 @@ Setup
 * Run a discovery server
 * Run a hystrix dashboard
 * Run the book-detail-svc
-** Located at https://github.com/wbauern/book-detail-sv
+** Located at https://github.com/wbauern/book-detail-svc
 ** Runs on port 8090
 * Run the book-svc :
 ** Located at https://github.com/wbauern/book-svc
