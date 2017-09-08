@@ -21,23 +21,26 @@ breaker names used in this demos will be the following:
 * *BookDetailSvcFeignClient#getBookDetailsByIsbn(String)* - Circuit Breaker for the Primary method (calling the details service)
 * *getBookDetailsByIsbn* - Circuit Breaker for the Fallback method (using the cache data)
 
-Setup
-~~~~~
+Setup for running local
+~~~~~~~~~~~~~~~~~~~~~~~
 * Run a discovery server
+** You can use the one from the SCS labs (https://github.com/eitansuez/spring-cloud-services-labs)
 * Run a hystrix dashboard
-* Run the book-detail-svc
+** You can use the one from the SCS labs (https://github.com/eitansuez/spring-cloud-services-labs)
+* Build and run the book-detail-svc
 ** Located at https://github.com/wbauern/book-detail-svc
 ** Runs on port 8090
-* Run the book-svc :
+* Build and run the book-svc :
 ** Located at https://github.com/wbauern/book-svc
 ** Runs on port 8080
 * Run JMeter
-** JMeter scripts used for demo located in:
+** Can be downloaded from http://jmeter.apache.org/download_jmeter.cgi
+** JMeter scripts used for demo located in the book-svc repo: https://github.com/wbauern/book-svc/tree/master/scripts
 
 Circuit Breaker Demo
 ~~~~~~~~~~~~~~~~~~~~
 
-This part of the demo will use a load test with JMeter to put load on a   The book-details-svc can then be killed and restarted to show via the dashboard how the circuit breaker handles it with no errors.
+This part of the demo will use a load test with JMeter to put a steady load on the book-svc.  The book-details-svc can then be killed and restarted to show via the dashboard how the circuit breaker handles it with no errors.
 
 Demo Steps:
 ^^^^^^^^^^^
@@ -52,15 +55,15 @@ click the Monitor Stream button.
 . Show the Hystrix dashboard and click on the Alphabetically link at the top of the screen.  This will keep the circuit breakers
 ordered by name instead of load and prevent them from swapping positions during the demo.
 . Kill the book-detail-svc and talk to what is happening in the dashboard.
-.. Failures start to occur and are routed to the fallback method.
+.. Failures start to occur and are routed to the fallback method that gets the data from a cache.
 .. The fallback circuit breaker appears on the Dashboard as it begins to receive requests.
-.. The breaker on the primary opens and all load is being handled by the fallback.
-.. Point out that the primary will still be hit occasionally to see if it is back up (half-open state).
-. Show the Error % in JMeter and point out that no errors were received by the client.
+.. The circuit breaker on the primary eventually opens and all load is then being handled by the fallback.
+.. Point out that the primary will still be hit occasionally to see if it is back up (the half-open state).
+. Show the Error % in JMeter and point out that no errors at all were received by the client.
 . Start up the book-detail-svc and show the Dashboard again.
 .. There may be a 30 - 60 second period before the load starts getting handled by the svc again.  Explain why: the service needs to
-register and won't be visible to the book-svc until its service registry information has been refreshed.
-.. Point out on the Dashboard the load shifting back to the primary circuit breaker.
+register with Eureka and won't be visible to the book-svc until its service registry information has been refreshed.
+.. Point out on the Dashboard the load shifting back to the primary circuit breaker from the fallback.
 . Again emphasize that the primary dependency of the book service went down and back up with not a single error returned to the client.
 
 
@@ -78,6 +81,14 @@ Demo Steps:
 . In JMeter show in the Load Generator component that it will be using 13 concurrent threads during the test.  Then click on the Summary
 Report component for the load test and start the test.
 . The Dashboard will show the following
-.. Load initially growing on the primary breaker calling out to the details service.
-.. Then when the max number of threads are being consumed some load will be shed to the cache circuit breaker.  The purple
+.. Load initially growing on the primary breaker calling out to the book-detail-svc.
+.. Then when the max number of threads are being consumed some load will be shed to the cache circuit breaker via the fallback.  The purple
 number (Rejected) reflects the number of request being shed to the fallback.
+
+Running On PWS
+~~~~~~~~~~~~~~
+
+* Run: cf create-service p-service-registry standard service-registry
+* Run: cf create-service p-circuit-breaker-dashboard standard circuit-breaker-dashboard
+* Do a cf push for both the book-svc and book-detail-svc. They both have manifest files that will bind them to the registry and dashboard.
+* Run: cf allow-access book-svc book-detail-svc --protocol tcp --port 8080
