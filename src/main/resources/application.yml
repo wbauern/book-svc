@@ -1,10 +1,20 @@
 spring:
   application:
     name: book-svc
-    
+  cloud:
+    services:
+      registrationMethod: direct
+          
 management:
   security:
     enabled: false
-    
-feign.hystrix.enabled: true
 
+security:
+  basic:
+    enabled: false
+        
+feign:
+  hystrix:
+    enabled: true
+
+logging.level.pivotal.io.booksvc: DEBUG
