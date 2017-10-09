@@ -46,7 +46,7 @@ Demo Steps:
 ^^^^^^^^^^^
 
 . Load the book-svc-steady-load.jmx script in JMeter
-. Go to the Hystrix Dashboard: http://localhost:8686/hytrix
+. Go to the Hystrix Dashboard: http://localhost:8686/hystrix
 . Enter the URL to the book-svc hystrix stream: http://localhost:8080/hystrix.stream , enter a title of Book Service and then
 click the Monitor Stream button.
 . Explain how you don't see any circuit breakers in the dashboard until they actually start receiving requests.
